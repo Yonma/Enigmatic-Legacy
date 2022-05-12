@@ -2332,10 +2332,6 @@ public class EnigmaticEventHandler {
 		try {
 			ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
 
-			if (!enigmaticLegacy.isCSGPresent()) {
-				grantStarterGear(player);
-			}
-
 			/*
 			 * Handlers for fixing missing Curios slots upong joining the world.
 			 */
@@ -2541,85 +2537,6 @@ public class EnigmaticEventHandler {
 	public void addOneOf(LivingDropsEvent event, ItemStack... itemStacks) {
 		int chosenStack = theySeeMeRollin.nextInt(itemStacks.length);
 		this.addDrop(event, itemStacks[chosenStack]);
-	}
-
-	public static void grantStarterGear(PlayerEntity player) {
-		EnigmaticLegacy.logger.info("Granting starter gear to " + player.getGameProfile().getName());
-
-		/*
-		 * Handler for bestowing Enigmatic Amulet to the player, when they first join
-		 * the world.
-		 */
-
-		if (OmniconfigHandler.isItemEnabled(EnigmaticLegacy.enigmaticAmulet))
-			if (!SuperpositionHandler.hasPersistentTag(player, EnigmaticEventHandler.NBT_KEY_FIRSTJOIN)) {
-
-				ItemStack enigmaticAmulet = new ItemStack(EnigmaticLegacy.enigmaticAmulet);
-				EnigmaticLegacy.enigmaticAmulet.setInscription(enigmaticAmulet, player.getGameProfile().getName());
-
-				if (!EnigmaticAmulet.seededColorGen.getValue()) {
-					EnigmaticLegacy.enigmaticAmulet.setRandomColor(enigmaticAmulet);
-				} else {
-					EnigmaticLegacy.enigmaticAmulet.setSeededColor(enigmaticAmulet);
-				}
-
-				if (player.inventory.getItem(8).isEmpty()) {
-					player.inventory.setItem(8, enigmaticAmulet);
-				} else {
-					if (!player.inventory.add(enigmaticAmulet)) {
-						ItemEntity dropAmulet = new ItemEntity(player.level, player.getX(), player.getY(), player.getZ(), enigmaticAmulet);
-						player.level.addFreshEntity(dropAmulet);
-					}
-				}
-
-				SuperpositionHandler.setPersistentBoolean(player, EnigmaticEventHandler.NBT_KEY_FIRSTJOIN, true);
-			}
-
-		/*
-		 * Another one for Ring of the Seven Curses.
-		 */
-
-		if (OmniconfigHandler.isItemEnabled(EnigmaticLegacy.cursedRing))
-			if (!SuperpositionHandler.hasPersistentTag(player, EnigmaticEventHandler.NBT_KEY_CURSEDGIFT)) {
-				ItemStack cursedRingStack = new ItemStack(EnigmaticLegacy.cursedRing);
-
-				if (!CursedRing.ultraHardcore.getValue()) {
-					if (player.inventory.getItem(7).isEmpty()) {
-						player.inventory.setItem(7, cursedRingStack);
-					} else {
-						if (!player.inventory.add(cursedRingStack)) {
-							ItemEntity dropRing = new ItemEntity(player.level, player.getX(), player.getY(), player.getZ(), cursedRingStack);
-							player.level.addFreshEntity(dropRing);
-						}
-					}
-				} else {
-					CuriosApi.getCuriosHelper().getCuriosHandler(player).ifPresent(handler -> {
-						if (!player.level.isClientSide) {
-							Map<String, ICurioStacksHandler> curios = handler.getCurios();
-
-							for (Map.Entry<String, ICurioStacksHandler> entry : curios.entrySet()) {
-								IDynamicStackHandler stackHandler = entry.getValue().getStacks();
-
-								for (int i = 0; i < stackHandler.getSlots(); i++) {
-									ItemStack present = stackHandler.getStackInSlot(i);
-									Set<String> tags = CuriosApi.getCuriosHelper().getCurioTags(cursedRing);
-									String id = entry.getKey();
-
-									if (present.isEmpty() && (tags.contains(id) || tags.contains("curio")) && cursedRing
-											.canEquip(id, player, cursedRingStack)) {
-										stackHandler.setStackInSlot(i, cursedRingStack);
-										//cursedRing.onEquip(id, i, player);
-										cursedRing.playRightClickEquipSound(player, cursedRingStack);
-									}
-								}
-							}
-
-						}
-					});
-				}
-
-				SuperpositionHandler.setPersistentBoolean(player, EnigmaticEventHandler.NBT_KEY_CURSEDGIFT, true);
-			}
 	}
 
 	/**
